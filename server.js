@@ -3,43 +3,57 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2");
-const path = require("path");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// Serve portfolio frontend files
 app.use(express.static(__dirname));
 
-// MySQL connection
-const db = mysql.createConnection({
+
+// MySQL Connection Pool
+const db = mysql.createPool({
     host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+    database: process.env.DB_NAME,
+
+    ssl: {
+        rejectUnauthorized: false
+    },
+
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-// Connect to MySQL
-db.connect(function (err) {
+
+// Test database connection
+db.getConnection(function (err, connection) {
+
     if (err) {
         console.error("Database connection failed:", err.message);
         return;
     }
 
     console.log("MySQL Database Connected Successfully!");
+
+    connection.release();
 });
 
-// Contact Form API
+
+// Home route
+app.get("/", function (req, res) {
+    res.send("Portfolio Backend is Running 🚀");
+});
+
+
+// Contact API
 app.post("/api/contact", function (req, res) {
 
-    const name = req.body.name;
-    const email = req.body.email;
-    const subject = req.body.subject;
-    const message = req.body.message;
+    const { name, email, subject, message } = req.body;
 
-    // Check required fields
     if (!name || !email || !subject || !message) {
         return res.status(400).json({
             success: false,
@@ -47,10 +61,12 @@ app.post("/api/contact", function (req, res) {
         });
     }
 
-    const sql =
-        "INSERT INTO contacts (name, email, subject, message) VALUES (?, ?, ?, ?)";
+    const sql = `
+        INSERT INTO contacts (name, email, subject, message)
+        VALUES (?, ?, ?, ?)
+    `;
 
-    db.query(
+    db.execute(
         sql,
         [name, email, subject, message],
         function (err, result) {
@@ -65,7 +81,7 @@ app.post("/api/contact", function (req, res) {
             }
 
             console.log(
-                "Contact saved successfully. ID: " + result.insertId
+                "Contact saved successfully! ID: " + result.insertId
             );
 
             return res.status(201).json({
@@ -76,9 +92,10 @@ app.post("/api/contact", function (req, res) {
     );
 });
 
+
 // Start server
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, function () {
-    console.log("Server running on http://localhost:" + PORT);
+    console.log("Server running on port " + PORT);
 });
