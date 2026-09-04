@@ -3,6 +3,17 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2");
+const dns = require("dns");
+
+console.log("DB_HOST:", JSON.stringify(process.env.DB_HOST));
+
+dns.lookup(process.env.DB_HOST, function (err, address) {
+    if (err) {
+        console.error("DNS lookup failed:", err.message);
+    } else {
+        console.log("DNS lookup successful:", address);
+    }
+});
 
 const app = express();
 
