@@ -5,9 +5,9 @@ const cors = require("cors");
 const mysql = require("mysql2");
 const dns = require("dns");
 
-console.log("DB_HOST:", JSON.stringify(process.env.DB_HOST));
+console.log("Clean DB_HOST:", JSON.stringify(process.env.DB_HOST.trim()));
 
-dns.lookup(process.env.DB_HOST, function (err, address) {
+dns.lookup(process.env.DB_HOST.trim(), function (err, address) {
     if (err) {
         console.error("DNS lookup failed:", err.message);
     } else {
@@ -24,11 +24,11 @@ app.use(express.static(__dirname));
 
 // MySQL Connection Pool
 const db = mysql.createPool({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    user: process.env.DB_USER,
+    host: process.env.DB_HOST.trim(),
+    port: Number(process.env.DB_PORT.trim()),
+    user: process.env.DB_USER.trim(),
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    database: process.env.DB_NAME.trim(),
 
     ssl: {
         rejectUnauthorized: false
